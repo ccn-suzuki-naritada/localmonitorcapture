@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>Screen Share Demo</title>
+</head>
+<body>
+  <button id="start">画面を共有</button>
+  <br>
+  <video id="screen" autoplay playsinline style="width: 80%; border: 1px solid #ccc;"></video>
+
+  <script>
+    document.getElementById("start").onclick = async () => {
+      try {
+        const stream = await navigator.mediaDevices.getDisplayMedia({ video: true });
+        document.getElementById("screen").srcObject = stream;
+      } catch (err) {
+        console.error("画面共有エラー:", err);
+      }
+    };
+  </script>
+</body>
+</html>
