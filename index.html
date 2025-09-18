@@ -2,10 +2,10 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <title>Screen Share + Multi MP3 Player</title>
+  <title>Screen Share + Multi MP3 Player + Mic</title>
   <style>
     body { font-family: sans-serif; }
-    video { width: 100%; border: 1px solid #ccc; margin-top: 10px; }
+    video { width: 100%; height: auto; border: 1px solid #ccc; margin-top: 10px; }
     .player { border: 1px solid #ccc; padding: 10px; margin: 10px 0; width: 420px; }
     button { margin: 2px; }
     input[type="range"] { width: 300px; }
@@ -18,12 +18,16 @@
   <br>
   <video id="screen" autoplay playsinline></video>
 
-  <h2>MP3 プレイヤー</h2>
+  <h2>マイク音声</h2>
+  <button id="micToggle">🎤 マイク ON</button>
+  <br>
+  音量: <input id="micVolume" type="range" min="0" max="1" step="0.01" value="1">
 
+  <h2>MP3 プレイヤー</h2>
   <div id="players"></div>
 
   <script>
-    // 画面共有
+    // ===== 画面共有 =====
     document.getElementById("start").onclick = async () => {
       try {
         const stream = await navigator.mediaDevices.getDisplayMedia({ video: true });
@@ -33,7 +37,40 @@
       }
     };
 
-    // プレイヤー生成関数
+    // ===== マイク音声 =====
+    let micStream = null;
+    let micAudio = null;
+    const micToggle = document.getElementById("micToggle");
+    const micVolume = document.getElementById("micVolume");
+
+    micToggle.onclick = async () => {
+      if (!micStream) {
+        try {
+          micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          micAudio = new Audio();
+          micAudio.srcObject = micStream;
+          micAudio.autoplay = true;
+          micAudio.loop = true;
+          micAudio.volume = micVolume.value;
+          micToggle.textContent = "🎤 マイク OFF";
+        } catch (err) {
+          console.error("マイク取得エラー:", err);
+        }
+      } else {
+        // OFF にする
+        micStream.getTracks().forEach(track => track.stop());
+        micStream = null;
+        micAudio.pause();
+        micAudio = null;
+        micToggle.textContent = "🎤 マイク ON";
+      }
+    };
+
+    micVolume.oninput = () => {
+      if (micAudio) micAudio.volume = micVolume.value;
+    };
+
+    // ===== MP3 プレイヤー =====
     function createPlayer(container, fileName, title) {
       const wrapper = document.createElement("div");
       wrapper.className = "player";
@@ -112,17 +149,15 @@
       container.appendChild(wrapper);
     }
 
-    // 時間表示用フォーマット
     function formatTime(sec) {
       const m = Math.floor(sec / 60);
       const s = Math.floor(sec % 60);
       return `${m}:${s.toString().padStart(2, "0")}`;
     }
 
-    // プレイヤーを追加
     const playersContainer = document.getElementById("players");
-    createPlayer(playersContainer, "bgm.mp3", "🎵 bgm 1");
-    createPlayer(playersContainer, "doragon.mp3", "🎵 ドラゴン 2");
+    createPlayer(playersContainer, "bgm.mp3", "🎵 サンプル曲 1");
+    createPlayer(playersContainer, "doragon.mp3", "🎵 サンプル曲 2");
   </script>
 </body>
 </html>
