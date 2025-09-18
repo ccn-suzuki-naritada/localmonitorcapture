@@ -2,13 +2,14 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <title>Screen Share + MP3 Player</title>
+  <title>Screen Share + Multi MP3 Player</title>
   <style>
     body { font-family: sans-serif; }
     video { width: 80%; border: 1px solid #ccc; margin-top: 10px; }
-    .controls { margin-top: 20px; }
+    .player { border: 1px solid #ccc; padding: 10px; margin: 10px 0; width: 420px; }
     button { margin: 2px; }
     input[type="range"] { width: 300px; }
+    .time { font-size: 0.9em; }
   </style>
 </head>
 <body>
@@ -18,14 +19,8 @@
   <video id="screen" autoplay playsinline></video>
 
   <h2>MP3 プレイヤー</h2>
-  <div class="controls">
-    <button id="play">▶ 再生</button>
-    <button id="pause">⏸ 一時停止</button>
-    <button id="replay">⏮ リプレイ</button>
-    <br>
-    <input id="seek" type="range" min="0" max="100" value="0">
-    <span id="time">0:00 / 0:00</span>
-  </div>
+
+  <div id="players"></div>
 
   <script>
     // 画面共有
@@ -38,35 +33,84 @@
       }
     };
 
-    // MP3 プレイヤー
-    const audio = new Audio("doragon.mp3");
-    const playBtn = document.getElementById("play");
-    const pauseBtn = document.getElementById("pause");
-    const replayBtn = document.getElementById("replay");
-    const seek = document.getElementById("seek");
-    const timeLabel = document.getElementById("time");
+    // プレイヤー生成関数
+    function createPlayer(container, fileName, title) {
+      const wrapper = document.createElement("div");
+      wrapper.className = "player";
 
-    // 再生
-    playBtn.onclick = () => audio.play();
-    // 一時停止
-    pauseBtn.onclick = () => audio.pause();
-    // リプレイ
-    replayBtn.onclick = () => { audio.currentTime = 0; audio.play(); };
+      const heading = document.createElement("h3");
+      heading.textContent = title;
+      wrapper.appendChild(heading);
 
-    // シークバー更新
-    audio.addEventListener("timeupdate", () => {
-      if (!isNaN(audio.duration)) {
-        seek.value = (audio.currentTime / audio.duration) * 100;
-        timeLabel.textContent = formatTime(audio.currentTime) + " / " + formatTime(audio.duration);
-      }
-    });
+      const audio = new Audio(fileName);
 
-    // シーク操作
-    seek.addEventListener("input", () => {
-      if (!isNaN(audio.duration)) {
-        audio.currentTime = (seek.value / 100) * audio.duration;
-      }
-    });
+      const playBtn = document.createElement("button");
+      playBtn.textContent = "▶ 再生";
+      playBtn.onclick = () => audio.play();
+
+      const pauseBtn = document.createElement("button");
+      pauseBtn.textContent = "⏸ 一時停止";
+      pauseBtn.onclick = () => audio.pause();
+
+      const replayBtn = document.createElement("button");
+      replayBtn.textContent = "⏮ リプレイ";
+      replayBtn.onclick = () => { audio.currentTime = 0; audio.play(); };
+
+      const loopBtn = document.createElement("button");
+      loopBtn.textContent = "🔁 ループOFF";
+      loopBtn.onclick = () => {
+        audio.loop = !audio.loop;
+        loopBtn.textContent = audio.loop ? "🔁 ループON" : "🔁 ループOFF";
+      };
+
+      const seek = document.createElement("input");
+      seek.type = "range";
+      seek.min = 0;
+      seek.max = 100;
+      seek.value = 0;
+
+      const timeLabel = document.createElement("span");
+      timeLabel.className = "time";
+      timeLabel.textContent = "0:00 / 0:00";
+
+      const volumeLabel = document.createElement("label");
+      volumeLabel.textContent = " 音量:";
+      const volume = document.createElement("input");
+      volume.type = "range";
+      volume.min = 0;
+      volume.max = 1;
+      volume.step = 0.01;
+      volume.value = 1;
+      volume.oninput = () => { audio.volume = volume.value; };
+
+      // シーク更新
+      audio.addEventListener("timeupdate", () => {
+        if (!isNaN(audio.duration)) {
+          seek.value = (audio.currentTime / audio.duration) * 100;
+          timeLabel.textContent = formatTime(audio.currentTime) + " / " + formatTime(audio.duration);
+        }
+      });
+
+      // シーク操作
+      seek.addEventListener("input", () => {
+        if (!isNaN(audio.duration)) {
+          audio.currentTime = (seek.value / 100) * audio.duration;
+        }
+      });
+
+      wrapper.appendChild(playBtn);
+      wrapper.appendChild(pauseBtn);
+      wrapper.appendChild(replayBtn);
+      wrapper.appendChild(loopBtn);
+      wrapper.appendChild(document.createElement("br"));
+      wrapper.appendChild(seek);
+      wrapper.appendChild(timeLabel);
+      wrapper.appendChild(document.createElement("br"));
+      wrapper.appendChild(volumeLabel);
+      wrapper.appendChild(volume);
+
+      container.appendChild(wrapper);
+    }
 
     // 時間表示用フォーマット
     function formatTime(sec) {
@@ -74,6 +118,11 @@
       const s = Math.floor(sec % 60);
       return `${m}:${s.toString().padStart(2, "0")}`;
     }
+
+    // プレイヤーを追加
+    const playersContainer = document.getElementById("players");
+    createPlayer(playersContainer, "sample1.mp3", "🎵 サンプル曲 1");
+    createPlayer(playersContainer, "sample2.mp3", "🎵 サンプル曲 2");
   </script>
 </body>
 </html>
